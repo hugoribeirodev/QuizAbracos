@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz - Projeto Abraços</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #003a73;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    header {
+      width: 100%;
+      height: 80px;
+      background: #003a73;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    header img {
+      max-width: 200px; /* Ajuste para uma largura menor em telas pequenas */
+      height: auto;
+    }
+
+    .quiz-container {
+      width: 100%;
+      max-width: 700px;
+      background: #FF6B29;
+      border-radius: 20px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4);
+      padding: 30px;
+      text-align: center;
+      margin: 60px auto;
+      transition: opacity 0.5s ease-in-out;
+      opacity: 1;
+    }
+
+    .question {
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+      text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .option {
+      background: #003a73;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border: none;
+      padding: 15px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.5s ease, background-color 0.5s ease;
+    }
+
+    .option:hover {
+      transform: rotate(-1deg) scale(1.1);
+      background-color: #202124;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .results {
+      font-size: 1.5rem;
+      margin-top: 20px;
+      line-height: 1.8;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .restart-button {
+      margin-top: 20px;
+      background: #003a73;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.3s ease, background-color 0.3s ease;
+    }
+
+    .restart-button:hover {
+      transform: scale(1.1);
+      background-color: #202124;
+    }
+
+    /* Ajustes para dispositivos móveis */
+    @media (max-width: 500px) {
+      body {
+        padding: 10px;
+      }
+
+      header {
+        height: 60px;
+      }
+
+      header img {
+        max-width: 150px;
+      }
+
+      .quiz-container {
+        padding: 20px;
+        margin: 40px auto;
+        height: auto; /* Ajuste a altura para não cortar o conteúdo */
+      }
+
+      .question {
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+      }
+
+      .option {
+        font-size: 1rem;
+        padding: 12px;
+        height: 60px;
+        margin: 10px;
+      }
+
+      .results {
+        font-size: 1.2rem;
+      }
+
+      .restart-button {
+        font-size: 1rem;
+        padding: 12px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="img/Logotipo-H-Abraços-Original.png" alt="Logotipo do Projeto Abraços">
+  </header>
+
+  <div class="quiz-container" id="quiz-container">
+    <div id="quiz">
+      <p class="question" id="question">Pergunta</p>
+      <div class="options" id="options"></div>
+    </div>
+    <div id="results" class="hidden">
+      <h2>Resultados</h2>
+      <p id="score"></p>
+      <div id="review"></div>
+      <button class="restart-button" onclick="restartQuiz()">Reiniciar Quiz</button>
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      { question: "Qual é o objetivo principal do projeto Abraços?", options: ["Ensinar programação", "Ajudar imigrantes e refugiados", "Construir casas", "Fornecer alimentos"], correct: 1 },
+      { question: "Quantos imigrantes e refugiados existem no Brasil?", options: ["200 mil", "800 mil", "1,5 milhões", "1 milhão"], correct: 2 },
+      { question: "Quais são os 4 pilares de desafios enfrentados por imigrantes e refugiados?", options: ["Saúde mental, comunicação, regularização de documento e falta de emprego", "Barreiras linguísticas, isolamento social, acesso à habitação e discriminação", "Conflitos familiares, adaptação ao clima, dificuldades burocráticas e falta de apoio social.", "Acesso à educação, saúde física, integração cultural e dificuldades financeiras."], correct: 0 },
+      { question: "Qual é o público-alvo principal do projeto Abraços?", options: ["Crianças em idade escolar", "Idosos", "Imigrantes e refugiados", "Desempregados locais"], correct: 2 },
+      { question: "Qual destes NÃO é um benefício do projeto Abraços?", options: ["Conexão com empregos", "Cursos de qualificação", "Serviços bancários", "Locais de abrigo"], correct: 2 },
+      { question: "Em qual país o projeto Abraços foi iniciado?", options: ["Brasil", "Estados Unidos", "Portugal", "Argentina"], correct: 0 }
+    ];
+
+    let currentQuestion = 0;
+    let score = 0;
+    const userAnswers = [];
+
+    const questionEl = document.getElementById("question");
+    const optionsEl = document.getElementById("options");
+    const resultsContainer = document.getElementById("results");
+    const scoreEl = document.getElementById("score");
+    const reviewEl = document.getElementById("review");
+
+    function loadQuestion() {
+      const current = questions[currentQuestion];
+      questionEl.textContent = current.question;
+      optionsEl.innerHTML = "";
+      current.options.forEach((option, index) => {
+        const button = document.createElement("button");
+        button.textContent = option;
+        button.className = "option";
+        button.onclick = () => handleAnswer(index);
+        optionsEl.appendChild(button);
+      });
+    }
+
+    function handleAnswer(selected) {
+      const current = questions[currentQuestion];
+      userAnswers.push({ selected, correct: current.correct });
+      if (selected === current.correct) score++;
+      currentQuestion++;
+      if (currentQuestion < questions.length) {
+        loadQuestion();
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      document.getElementById("quiz").classList.add("hidden");
+      resultsContainer.classList.remove("hidden");
+      scoreEl.textContent = `Você acertou ${score} de ${questions.length} perguntas.`;
+      reviewEl.innerHTML = "<h3>Revisão:</h3>";
+      userAnswers.forEach((answer, index) => {
+        const correctOption = questions[index].options[questions[index].correct];
+        const selectedOption = questions[index].options[answer.selected];
+        const questionReview = document.createElement("p");
+        questionReview.innerHTML = `<strong>Pergunta ${index + 1}:</strong> ${questions[index].question}<br> Sua resposta: ${selectedOption} ${answer.selected === answer.correct ? "✅" : "❌"}<br> Resposta correta: ${correctOption}`;
+        reviewEl.appendChild(questionReview);
+      });
+    }
+
+    function restartQuiz() {
+      currentQuestion = 0;
+      score = 0;
+      userAnswers.length = 0;
+      resultsContainer.classList.add("hidden");
+      document.getElementById("quiz").classList.remove("hidden");
+      loadQuestion();
+    }
+
+    loadQuestion();
+  </script>
+</body>
+</html>
